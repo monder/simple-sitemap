@@ -21,7 +21,7 @@ module.exports = function Sitemap(siteURL, siteDistPath, dryRun) {
   if (!dryRun) {
     dryRun = false;
   }
-  
+
   if (!/^(f|ht)tps?:\/\//i.test(siteURL)) {
       siteURL = "http://" + siteURL;
   }
@@ -102,7 +102,7 @@ module.exports = function Sitemap(siteURL, siteDistPath, dryRun) {
           util.log("Sorry, there was a problem submitting your sitemapindex to " + target.name);
         }
         callback();
-      }
+      };
       req.open("GET", "http://"+target.URL+"/ping?sitemap=" + siteURL + "/sitemap-index.xml", true);
       req.send();
     }, function(){
@@ -118,17 +118,39 @@ module.exports = function Sitemap(siteURL, siteDistPath, dryRun) {
 
     var xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',
-      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
     ].join('');
 
     this.pages.forEach(function(page) {
-      xml += [
-        '<url>',
-        '<loc>' + page.url + '</loc>',
-        '<changefreq>' + page.changeFreq + '</changefreq>',
-        '<priority>' + page.priority + '</priority>',
-        '</url>',
-      ].join('');
+      if (Array.isArray(page.url)) {
+        linksString = '';
+        page.url.forEach(function(link) {
+           links = ['<xhtml:link'];
+           for (var k in link) {
+             links.push(k + '="' + link[k] + '"');
+           }
+           links.push('/>');
+           linksString += links.join(' ');
+        });
+        page.url.forEach(function(link) {
+        xml += [
+          '<url>',
+          '<loc>' + link.href + '</loc>',
+          linksString,
+          '<changefreq>' + page.changeFreq + '</changefreq>',
+          '<priority>' + page.priority + '</priority>',
+          '</url>',
+        ].join('');
+        });
+      } else {
+        xml += [
+          '<url>',
+          '<loc>' + page.url + '</loc>',
+          '<changefreq>' + page.changeFreq + '</changefreq>',
+          '<priority>' + page.priority + '</priority>',
+          '</url>',
+        ].join('');
+      }
     });
 
     xml += '</urlset>';
